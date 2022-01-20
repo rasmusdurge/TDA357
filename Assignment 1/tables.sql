@@ -31,7 +31,7 @@ CREATE TABLE LimitedCourses (
 CREATE TABLE StudentBranches (
 	name CHAR(255) NOT NULL,
 	program CHAR(255) NOT NULL,
-	student int,
+	student BIGINT,
 	FOREIGN KEY (student) REFERENCES Students,
 	FOREIGN KEY (name, program) REFERENCES Branches
 );
