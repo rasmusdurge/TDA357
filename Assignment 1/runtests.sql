@@ -20,21 +20,25 @@ GRANT ALL ON SCHEMA public TO postgres;
 -- Tests various queries from the assignment, uncomment these as you make progress
 
 
-SELECT idnr, name, login, program, branch FROM BasicInformation;
+--SELECT idnr, name, login, program, branch FROM BasicInformation;
 
-SELECT student, course, grade, credits FROM FinishedCourses;
+--SELECT student, course, grade, credits FROM FinishedCourses;
 
-SELECT student, course, credits FROM PassedCourses;
+--SELECT student, course, credits FROM PassedCourses;
 
 --SELECT student, course, status FROM Registrations;
 
-SELECT 'alla kurser som är mandatory för alla studenter';
-SELECT * FROM UnreadMandatoryHelper;
+--SELECT '- ALL Mandatory courses for all students - ';
+--SELECT * FROM UnreadMandatoryHelper;
 --SELECT * FROM PassedCourses;
-SELECT 'icke avklarade unread mandatory';
-SELECT * FROM UnreadMandatory;
+--SELECT '- Non finished unread mandatory courses -';
+--SELECT * FROM UnreadMandatory;
+
+
 --SELECT student, totalCredits, mandatoryLeft, mathCredits, researchCredits, seminarCourses, qualified FROM PathToGraduation;
 
+
+SELECT * FROM PathToGraduation;
 
 -- Life-hack: When working on a new view you can write it as a query here (without creating a view) and when it works just add CREATE VIEW and put it in views.sql
 
