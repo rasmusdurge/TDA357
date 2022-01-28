@@ -48,13 +48,8 @@ CREATE VIEW UnreadMandatory AS (
 	SELECT * FROM UnreadMandatoryHelper
 	EXCEPT
 	SELECT student, course FROM PassedCourses
-	
-	--EXCEPT
-	--SELECT student, course FROM Registrations
-
-	--WHERE Registrations.status = 'registered'
-
 	ORDER BY student
 
 ); 
+ 
  
