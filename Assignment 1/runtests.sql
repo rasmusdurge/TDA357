@@ -26,9 +26,13 @@ SELECT student, course, grade, credits FROM FinishedCourses;
 
 SELECT student, course, credits FROM PassedCourses;
 
-SELECT student, course, status FROM Registrations;
+--SELECT student, course, status FROM Registrations;
 
-SELECT student, course FROM UnreadMandatory;
+SELECT 'alla kurser som är mandatory för alla studenter';
+SELECT * FROM UnreadMandatoryHelper;
+--SELECT * FROM PassedCourses;
+SELECT 'icke avklarade unread mandatory';
+SELECT * FROM UnreadMandatory;
 --SELECT student, totalCredits, mandatoryLeft, mathCredits, researchCredits, seminarCourses, qualified FROM PathToGraduation;
 
 

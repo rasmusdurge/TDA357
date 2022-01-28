@@ -30,21 +30,31 @@ CREATE VIEW Registrations as (
 	SELECT student, course, 'waiting' as status FROM WaitingList
 	);
 	
-CREATE VIEW UnreadMandatory as (
+CREATE VIEW UnreadMandatoryHelper as (
 	SELECT idnr as student, MandatoryBranch.course
 	FROM BasicInformation
 	JOIN MandatoryBranch
-	ON BasicInformation.branch = MandatoryBranch.branch
-	UNION ALL 
+	ON BasicInformation.branch = MandatoryBranch.branch AND 
+	BasicInformation.program = MandatoryBranch.program
+	UNION  
 	SELECT idnr as student, MandatoryProgram.course
 	FROM BasicInformation
 	JOIN MandatoryProgram
-	ON BasicInformation.program = MandatoryProgram.program
-	
-	SELECT DISTINCT idnr as student, courses
-	FROM BasicInformation
-	WHERE NOT EXISTS(
-    SELECT course FROM PassedCourses 
-    WHERE idnr = passedCourses.student)
+	ON BasicInformation.program = MandatoryProgram.program 
+	ORDER BY student 
 	);
 	
+CREATE VIEW UnreadMandatory AS (
+	SELECT * FROM UnreadMandatoryHelper
+	EXCEPT
+	SELECT student, course FROM PassedCourses
+	
+	--EXCEPT
+	--SELECT student, course FROM Registrations
+
+	--WHERE Registrations.status = 'registered'
+
+	ORDER BY student
+
+); 
+ 
