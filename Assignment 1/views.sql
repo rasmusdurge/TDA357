@@ -51,6 +51,7 @@ CREATE VIEW UnreadMandatory AS (
 	ORDER BY student
 
 ); 
+
 CREATE VIEW ZeroPointers AS (
 	SELECT Students.idnr as student, 0 as TotalCredits
 	FROM Students, PassedCourses
@@ -69,19 +70,11 @@ CREATE VIEW ZeroPointers AS (
 	ORDER BY Students.idnr asc
 	);
 		
- CREATE VIEW PathToGraduation AS (
+ CREATE VIEW AllPointers AS (
  SELECT * FROM Pointers
  UNION 
  SELECT * FROM ZeroPointers
  ORDER BY student
- 
- 
- --RIGHT JOIN MandatoryLeft ON student = MandatoryLeft.student
-
- /*
- UNION 
- SELECT * FROM mandatoryLeft
- ORDER BY student*/
  
  );
  
@@ -99,5 +92,12 @@ CREATE VIEW ZeroPointers AS (
  
  );
 
- );
+CREATE VIEW PathToGraduation AS (
+	SELECT AllPointers.student, totalCredits, MandatoryLeft FROM AllPointers
+	JOIN MandatoryLeft
+	ON AllPointers.student = MandatoryLeft.student
+
+
+);
+ 
  
