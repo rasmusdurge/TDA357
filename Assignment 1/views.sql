@@ -179,6 +179,36 @@ CREATE OR REPLACE VIEW ZeroPointers AS (
 
  
  -- Recommended course
+ /*
+  CREATE OR REPLACE VIEW UnreadRecommendedHelper as (
+  
+	SELECT idnr as student, 'hej' as course
+	FROM BasicInformation
+	EXCEPT 
+	SELECT student, 'hej' as course from s
+	
+	);
+	CREATE OR REPLACE VIEW s as (
+	
+	SELECT idnr as student, course FROM BasicInformation, RecommendedBranch
+	WHERE BasicInformation.branch = RecommendedBranch.branch AND 
+	BasicInformation.program = RecommendedBranch.program
+	EXCEPT 
+	SELECT student, course FROM PassedCourses
+	GROUP BY student, course
+	HAVING sum(PassedCourses.credits) >= 10 
+	ORDER BY student
+	);
+-- View of unread recommended courses
+CREATE OR REPLACE VIEW UnreadRecommended AS (
+	SELECT student,course as course FROM UnreadRecommendedHelper
+	EXCEPT
+	SELECT student, course FROM PassedCourses
+	GROUP BY student, course
+	HAVING sum(PassedCourses.credits) >= 10 
+	ORDER BY student
+); */
+ 
  
  CREATE OR REPLACE VIEW UnreadRecommendedHelper as (
 	SELECT idnr as student, RecommendedBranch.course as course
@@ -187,7 +217,7 @@ CREATE OR REPLACE VIEW ZeroPointers AS (
 	ON BasicInformation.branch = RecommendedBranch.branch AND 
 	BasicInformation.program = RecommendedBranch.program
 	UNION
-	SELECT idnr as student, 'No course yet' as course FROM BasicInformation, RecommendedBranch
+	SELECT idnr as student, 'No course yet' as course FROM BasicInformation
 	WHERE BasicInformation.branch IS NULL
 	
 	);
@@ -201,6 +231,7 @@ CREATE OR REPLACE VIEW UnreadRecommended AS (
 	HAVING sum(PassedCourses.credits) >= 10 
 	ORDER BY student
 ); 
+
 
 CREATE OR REPLACE VIEW QualifiedRecommendedCourses AS (
 
@@ -234,13 +265,15 @@ CREATE OR REPLACE VIEW PathToGraduationHelper AS (
 -- The collected view that show the remaining path to graduation
 CREATE OR REPLACE VIEW PathToGraduation AS (
 
-	SELECT student, totalCredits, MandatoryLeft, 
-		mathcredits, researchcredits,
+--student, totalCredits, mandatoryLeft,
+-- mathCredits, researchCredits, seminarCourses, qualified
+	SELECT student, totalCredits, mandatoryleft as mandatoryLeft, 
+		mathcredits as mathCredits, researchcredits as researchCredits, passedseminar as seminarCourses,
 		
 	CASE
 		WHEN MandatoryLeft = 0 AND mathcredits >= 20 AND researchcredits >= 10
-		AND passedseminar >= 1 AND qualified = 1 THEN 't'
-		ELSE 'f'
+		AND passedseminar > 0 AND qualified = 1 THEN TRUE
+		ELSE FALSE
 				
 	END AS qualified
 	FROM PathToGraduationHelper

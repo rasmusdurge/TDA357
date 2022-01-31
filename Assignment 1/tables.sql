@@ -20,10 +20,10 @@ CREATE TABLE Courses (
 );
 
 CREATE TABLE LimitedCourses (
-	code CHAR(6),
+	code CHAR(6) NOT NULL,
 	PRIMARY KEY(code),
 	FOREIGN KEY (code) REFERENCES Courses, 
-	capacity INT check (capacity > 0)
+	capacity INT check (capacity > 0) NOT NULL
 );
 
 CREATE TABLE StudentBranches (
@@ -51,7 +51,8 @@ CREATE TABLE MandatoryProgram(
 	course CHAR(6) NOT NULL,
 	program TEXT NOT NULL,
 	
-	FOREIGN KEY (course) REFERENCES Courses
+	FOREIGN KEY (course) REFERENCES Courses,
+	PRIMARY KEY (course, program) 
 );
 
 CREATE TABLE MandatoryBranch(
@@ -85,7 +86,7 @@ CREATE TABLE Registered(
 CREATE TABLE Taken(
 	student TEXT,
 	course TEXT NOT NULL,
-	grade CHAR(1) DEFAULT 'U',
+	grade CHAR(1) NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students,
 	FOREIGN KEY (course) REFERENCES Courses,
 	PRIMARY KEY (student, course),
