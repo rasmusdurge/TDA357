@@ -1,7 +1,7 @@
 
 -- View of BasicInformation 
 CREATE OR REPLACE VIEW BasicInformation AS (
-	SELECT idnr, Students.name, login, Students.program, Studentbranches.name AS branch
+	SELECT idnr, Students.name, login, Students.program, Studentbranches.branch AS branch
 	FROM Students LEFT OUTER JOIN StudentBranches ON Students.idnr = StudentBranches.student
 	);
 	

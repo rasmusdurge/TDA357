@@ -28,10 +28,10 @@ CREATE TABLE LimitedCourses (
 
 CREATE TABLE StudentBranches (
 	student TEXT NOT NULL PRIMARY KEY CHECK (student SIMILAR TO '[0-9]{10}'),
-	name TEXT NOT NULL,
+	branch TEXT NOT NULL,
 	program TEXT NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students(idnr),
-	FOREIGN KEY (name, program) REFERENCES Branches
+	FOREIGN KEY (branch, program) REFERENCES Branches
 );
 
 CREATE TABLE Classifications(
