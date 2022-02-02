@@ -209,7 +209,27 @@ CREATE OR REPLACE VIEW UnreadRecommended AS (
 	ORDER BY student
 ); */
  
+ CREATE OR REPLACE VIEW UnreadRecommendedHelper AS (
  
+	SELECT idnr as student, SUM(credits) as recommendedCredits FROM BasicInformation, PassedCourses, RecommendedBranch
+	WHERE 
+		RecommendedBranch.course = PassedCourses.course AND
+		BasicInformation.program = RecommendedBranch.program AND
+		BasicInformation.branch = RecommendedBranch.branch AND
+		BasicInformation.idnr = PassedCourses.student
+	GROUP BY idnr
+	
+	);
+ CREATE OR REPLACE VIEW UnreadRecommended AS (
+	SELECT * FROM UnreadRecommendedHelper 
+	UNION
+	SELECT idnr as student, '0' as recommendedCredits FROM BasicInformation
+	EXCEPT 
+	SELECT student, '0' as recommendedCredits FROM UnreadRecommendedHelper
+	ORDER BY student
+	);
+ 
+ /*
  CREATE OR REPLACE VIEW UnreadRecommendedHelper as (
 	SELECT idnr as student, RecommendedBranch.course as course
 	FROM BasicInformation
@@ -232,7 +252,8 @@ CREATE OR REPLACE VIEW UnreadRecommended AS (
 	ORDER BY student
 ); 
 
-
+*/
+/*
 CREATE OR REPLACE VIEW QualifiedRecommendedCourses AS (
 
 	SELECT Students.idnr as student, ABS(SUM(case when
@@ -240,24 +261,27 @@ CREATE OR REPLACE VIEW QualifiedRecommendedCourses AS (
 	FROM Students, UnreadRecommended
 	GROUP BY idnr
 	);
-	
+	*/
 
 
 -- The collected view that show the remaining path to graduation
 CREATE OR REPLACE VIEW PathToGraduationHelper AS (
 
 	SELECT AllPointers.student as student, totalCredits, MandatoryLeft, 
-		mathcredits, researchcredits, qualified, passedseminar FROM AllPointers
+		mathcredits, researchcredits, passedseminar, recommendedCredits FROM AllPointers
 	JOIN MandatoryLeft
 	ON AllPointers.student = MandatoryLeft.student
 	JOIN AllMathCredits
 	ON AllMathCredits.student = AllPointers.student
 	JOIN AllResearchCredits
 	ON AllResearchCredits.student = AllPointers.student
-	JOIN QualifiedRecommendedCourses
+	/*JOIN QualifiedRecommendedCourses
 	ON AllPointers.student = QualifiedRecommendedCourses.student
+	*/
 	JOIN AllPassedSeminar
 	ON AllPassedSeminar.student = AllPointers.student
+	JOIN UnreadRecommended
+	ON UnreadRecommended.student = AllPointers.student
 	
 );
 
@@ -272,7 +296,7 @@ CREATE OR REPLACE VIEW PathToGraduation AS (
 		
 	CASE
 		WHEN MandatoryLeft = 0 AND mathcredits >= 20 AND researchcredits >= 10
-		AND passedseminar > 0 AND qualified = 1 THEN TRUE
+		AND passedseminar > 0 AND recommendedCredits >= 10 THEN TRUE
 		ELSE FALSE
 				
 	END AS qualified
