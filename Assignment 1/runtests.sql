@@ -30,7 +30,7 @@ SELECT student, course, credits FROM PassedCourses;
 SELECT student, course, status FROM Registrations;
 
 --SELECT '- ALL Mandatory courses for all students - ';
-SELECT * FROM UnreadMandatoryHelper;
+--SELECT * FROM UnreadMandatoryHelper;
 SELECT * FROM PassedCourses;
 --SELECT '- Non finished unread mandatory courses -';
 SELECT * FROM UnreadMandatory;

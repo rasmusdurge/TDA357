@@ -1,8 +1,8 @@
 
 CREATE TABLE Students (
-    idnr TEXT NOT NULL PRIMARY KEY CHECK (idnr SIMILAR TO '[0-9]{10}'),
+    idnr CHAR(10) NOT NULL PRIMARY KEY CHECK (idnr SIMILAR TO '[0-9]{10}'),
 	name TEXT NOT NULL,
-    login TEXT NOT NULL,
+    login TEXT NOT NULL UNIQUE,
 	program TEXT NOT NULL
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE Branches (
 CREATE TABLE Courses (
 	code CHAR(6) NOT NULL PRIMARY KEY,
 	name TEXT NOT NULL,
-	credits FLOAT NOT NULL,
+	credits FLOAT NOT NULL CHECK(credits >= 0),
 	department TEXT NOT NULL
 );
 
@@ -27,7 +27,7 @@ CREATE TABLE LimitedCourses (
 );
 
 CREATE TABLE StudentBranches (
-	student TEXT NOT NULL PRIMARY KEY CHECK (student SIMILAR TO '[0-9]{10}'),
+	student CHAR(10) NOT NULL PRIMARY KEY CHECK (student SIMILAR TO '[0-9]{10}'),
 	branch TEXT NOT NULL,
 	program TEXT NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students(idnr),
@@ -69,23 +69,22 @@ CREATE TABLE RecommendedBranch(
 	course CHAR(6) NOT NULL,
 	branch TEXT,
 	program TEXT NOT NULL,
-
 	FOREIGN KEY (course) REFERENCES Courses,
 	FOREIGN KEY (branch, program) REFERENCES Branches,
 	PRIMARY KEY (course,branch,program)
 );
 	
 CREATE TABLE Registered(
-	student TEXT NOT NULL,
-	course TEXT NOT NULL,
+	student CHAR(10) NOT NULL,
+	course CHAR(6) NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students,
 	FOREIGN KEY (course) REFERENCES Courses,
 	PRIMARY KEY (student, course)
 );
 
 CREATE TABLE Taken(
-	student TEXT,
-	course TEXT NOT NULL,
+	student CHAR(10),
+	course CHAR(6) NOT NULL,
 	grade CHAR(1) NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students,
 	FOREIGN KEY (course) REFERENCES Courses,
@@ -94,8 +93,8 @@ CREATE TABLE Taken(
 );
 
 CREATE TABLE WaitingList(
-	student TEXT,
-	course TEXT NOT NULL,
+	student CHAR(10),
+	course CHAR(6) NOT NULL,
 	position SERIAL NOT NULL,
 	FOREIGN KEY (student) REFERENCES Students,
 	FOREIGN KEY (course) REFERENCES LimitedCourses,

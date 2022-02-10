@@ -28,8 +28,8 @@ CREATE OR REPLACE VIEW Registrations as (
 	SELECT student, course, 'waiting' as status FROM WaitingList
 	);
 
---Helper view to create the unread mandatory courses	
-CREATE OR REPLACE VIEW UnreadMandatoryHelper as (
+--Mandatory courses from branch and program but remove passed courses
+CREATE OR REPLACE VIEW UnreadMandatory AS (
 	SELECT idnr as student, MandatoryBranch.course
 	FROM BasicInformation
 	JOIN MandatoryBranch
@@ -40,48 +40,27 @@ CREATE OR REPLACE VIEW UnreadMandatoryHelper as (
 	FROM BasicInformation
 	JOIN MandatoryProgram
 	ON BasicInformation.program = MandatoryProgram.program 
-	ORDER BY student 
-	);
-	
--- View of unread mandatory courses
-CREATE OR REPLACE VIEW UnreadMandatory AS (
-	SELECT * FROM UnreadMandatoryHelper
 	EXCEPT
 	SELECT student, course FROM PassedCourses
 	ORDER BY student
-
 ); 
 
--- All pointers
 
---Helper view to create total credits 
---This view selects all student that have zero total credits
-CREATE OR REPLACE VIEW ZeroPointers AS (
+
+
+-- All pointers
+-- Union of students with zero credits and students with positive credits
+ CREATE OR REPLACE VIEW AllPointers AS (
 	SELECT Students.idnr as student, 0 as TotalCredits
 	FROM Students, PassedCourses
 	WHERE Students.idnr NOT IN (SELECT student FROM PassedCourses)
-	--REPLACE BY PassedCourses.students ? 
-	
-	GROUP BY idnr
-	);
--- This helper table selects student that have >0 total credits
- CREATE OR REPLACE VIEW Pointers AS (
+	group by idnr
+	UNION 
 	SELECT Students.idnr as student, sum(PassedCourses.credits) as TotalCredits
 	FROM Students
 	JOIN PassedCourses
 	ON Students.idnr = PassedCourses.student
 	GROUP BY Students.idnr
-	ORDER BY Students.idnr asc
-	);
-
--- This view creates the union of the two previous views to see all students
--- and their corresponding total credits
- CREATE OR REPLACE VIEW AllPointers AS (
- SELECT * FROM Pointers
- UNION 
- SELECT * FROM ZeroPointers
- ORDER BY student
- 
  );
  
  -- This view corresponds each student with the number of remaining mandatory courses
@@ -98,32 +77,16 @@ CREATE OR REPLACE VIEW ZeroPointers AS (
  
  );
  
- -- Total amount of math credits
- 
- -- Helper view for all students with positive math credits
- CREATE OR REPLACE VIEW PositiveMathCredits AS (
-	SELECT student as student, SUM(credits) as mathcredits
-	FROM PassedCourses
-	JOIN Classified
-	ON PassedCourses.course = Classified.course
-	WHERE classification = 'math'
-	GROUP BY student
- );
- 
- -- Helper view for all students with zero math credits
- CREATE OR REPLACE VIEW ZeroMathCredits AS ( 
-	SELECT DISTINCT BasicInformation.idnr as student, '0' as mathcredits
-	FROM BasicInformation, PositiveMathCredits
-	WHERE BasicInformation.idnr NOT IN (SELECT student FROM PositiveMathCredits)
-	
- );
- 
- -- All students and their corresponding number of math credits
- CREATE OR REPLACE VIEW AllMathCredits AS ( 
-	SELECT PositiveMathCredits.student, mathcredits FROM PositiveMathCredits
-	UNION 
-	SELECT ZeroMathCredits.student as student, '0' FROM ZeroMathCredits
+	CREATE OR REPLACE VIEW AllMathCredits AS (
+	select student, sum(credits) as mathcredits from passedcourses 
+	join classified on passedcourses.course = classified.course 
+	where classification = 'math' group by student 
+	union 
+	select idnr, 0 from students 
+	except
+	select student, 0 from passedcourses
 	);
+ 
  
  -- Total number of research credits 
  CREATE OR REPLACE VIEW PositiveResearchCredits AS (
@@ -150,64 +113,22 @@ CREATE OR REPLACE VIEW ZeroPointers AS (
 	);
 	
 	--SEMINAR 
-	
- -- Helper view for all students with 1 or more seminar courses
- CREATE OR REPLACE VIEW PassedSeminar AS (
+	-- All students with a passed seminar course union all students with no such course
+ CREATE OR REPLACE VIEW AllPassedSeminar AS ( 
 	SELECT student, 1 as passedseminar
 	FROM PassedCourses
 	JOIN Classified
 	ON PassedCourses.course = Classified.course
 	WHERE classification = 'seminar'
 	GROUP BY student
- );
- 
- -- Helper view for all students with no seminar course
- CREATE OR REPLACE VIEW NotPassedSeminar AS ( 
-	SELECT DISTINCT BasicInformation.idnr as student, 0 as passedseminar
-	FROM BasicInformation, PassedSeminar
-	WHERE BasicInformation.idnr NOT IN (SELECT student FROM PassedSeminar)
- );
- 
- -- All students with or without seminar courses
- CREATE OR REPLACE VIEW AllPassedSeminar AS ( 
-	SELECT PassedSeminar.student, PassedSeminar.passedseminar FROM PassedSeminar
 	UNION ALL
-	SELECT NotPassedSeminar.student as student, NotPassedSeminar.passedseminar FROM NotPassedSeminar
-	ORDER BY student
-	);
--- END SEMINAR
-
- 
- -- Recommended course
- /*
-  CREATE OR REPLACE VIEW UnreadRecommendedHelper as (
-  
-	SELECT idnr as student, 'hej' as course
+	SELECT DISTINCT BasicInformation.idnr as student, 0 as passedseminar
 	FROM BasicInformation
-	EXCEPT 
-	SELECT student, 'hej' as course from s
-	
-	);
-	CREATE OR REPLACE VIEW s as (
-	
-	SELECT idnr as student, course FROM BasicInformation, RecommendedBranch
-	WHERE BasicInformation.branch = RecommendedBranch.branch AND 
-	BasicInformation.program = RecommendedBranch.program
-	EXCEPT 
-	SELECT student, course FROM PassedCourses
-	GROUP BY student, course
-	HAVING sum(PassedCourses.credits) >= 10 
+	WHERE BasicInformation.idnr NOT IN (SELECT student FROM PassedCourses, Classified
+	WHERE PassedCourses.course = Classified.course
+	AND classification = 'seminar')
 	ORDER BY student
 	);
--- View of unread recommended courses
-CREATE OR REPLACE VIEW UnreadRecommended AS (
-	SELECT student,course as course FROM UnreadRecommendedHelper
-	EXCEPT
-	SELECT student, course FROM PassedCourses
-	GROUP BY student, course
-	HAVING sum(PassedCourses.credits) >= 10 
-	ORDER BY student
-); */
  
  CREATE OR REPLACE VIEW UnreadRecommendedHelper AS (
  
@@ -229,40 +150,6 @@ CREATE OR REPLACE VIEW UnreadRecommended AS (
 	ORDER BY student
 	);
  
- /*
- CREATE OR REPLACE VIEW UnreadRecommendedHelper as (
-	SELECT idnr as student, RecommendedBranch.course as course
-	FROM BasicInformation
-	JOIN RecommendedBranch
-	ON BasicInformation.branch = RecommendedBranch.branch AND 
-	BasicInformation.program = RecommendedBranch.program
-	UNION
-	SELECT idnr as student, 'No course yet' as course FROM BasicInformation
-	WHERE BasicInformation.branch IS NULL
-	
-	);
-	
--- View of unread recommended courses
-CREATE OR REPLACE VIEW UnreadRecommended AS (
-	SELECT student,course as course FROM UnreadRecommendedHelper
-	EXCEPT
-	SELECT student, course FROM PassedCourses
-	GROUP BY student, course
-	HAVING sum(PassedCourses.credits) >= 10 
-	ORDER BY student
-); 
-
-*/
-/*
-CREATE OR REPLACE VIEW QualifiedRecommendedCourses AS (
-
-	SELECT Students.idnr as student, ABS(SUM(case when
-		UnreadRecommended.student IN (Students.idnr) then 1 else 0 end)-1) as qualified
-	FROM Students, UnreadRecommended
-	GROUP BY idnr
-	);
-	*/
-
 
 -- The collected view that show the remaining path to graduation
 CREATE OR REPLACE VIEW PathToGraduationHelper AS (
@@ -292,14 +179,9 @@ CREATE OR REPLACE VIEW PathToGraduation AS (
 --student, totalCredits, mandatoryLeft,
 -- mathCredits, researchCredits, seminarCourses, qualified
 	SELECT student, totalCredits, mandatoryleft as mandatoryLeft, 
-		mathcredits as mathCredits, researchcredits as researchCredits, passedseminar as seminarCourses,
-		
-	CASE
-		WHEN MandatoryLeft = 0 AND mathcredits >= 20 AND researchcredits >= 10
-		AND passedseminar > 0 AND recommendedCredits >= 10 THEN TRUE
-		ELSE FALSE
-				
-	END AS qualified
+		mathcredits as mathCredits, researchcredits as researchCredits,
+		passedseminar as seminarCourses, MandatoryLeft = 0 AND mathcredits >= 20 AND researchcredits >= 10
+		AND passedseminar > 0 AND recommendedCredits >= 10 AS qualified
 	FROM PathToGraduationHelper
 );
  
