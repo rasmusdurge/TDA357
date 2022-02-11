@@ -1,7 +1,7 @@
 INSERT INTO Department VALUES ('dep1')
 
-INSERT INTO Program VALUES ('Prog1','p1','dep1')
-INSERT INTO Program VALUES ('Prog2','p2', 'dep1')
+INSERT INTO Program VALUES ('prog1','p1','dep1')
+INSERT INTO Program VALUES ('prog2','p2', 'dep1')
 
 INSERT INTO Branches VALUES ('B1','Prog1');
 INSERT INTO Branches VALUES ('B2','Prog1');
