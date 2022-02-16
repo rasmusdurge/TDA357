@@ -1,7 +1,12 @@
-INSERT INTO Department VALUES ('dep1')
+INSERT INTO Department VALUES ('Dep1','D1');
 
-INSERT INTO Program VALUES ('Prog1','p1','dep1')
-INSERT INTO Program VALUES ('Prog2','p2', 'dep1')
+--INSERT INTO Prerequisities VALUES ('CCC222','');
+
+INSERT INTO Program VALUES ('Prog1','p1');
+INSERT INTO Program VALUES ('Prog2','p2');
+
+INSERT INTO progToDepartment VALUES ('Dep1', 'Prog1');
+INSERT INTO progToDepartment VALUES ('Dep1', 'Prog2');
 
 INSERT INTO Branches VALUES ('B1','Prog1');
 INSERT INTO Branches VALUES ('B2','Prog1');
@@ -69,4 +74,4 @@ INSERT INTO WaitingList VALUES('3333333333','CCC222',1);
 INSERT INTO WaitingList VALUES('3333333333','CCC333',1);
 INSERT INTO WaitingList VALUES('2222222222','CCC333',2);
 
-
+INSERT INTO Prerequisities VALUES('CCC444', 'CCC111');
