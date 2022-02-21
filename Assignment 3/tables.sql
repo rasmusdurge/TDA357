@@ -1,11 +1,4 @@
 
-CREATE TABLE Students (
-    idnr CHAR(10) NOT NULL PRIMARY KEY CHECK (idnr SIMILAR TO '[0-9]{10}'),
-	name TEXT NOT NULL,
-    login TEXT NOT NULL UNIQUE,
-	program TEXT NOT NULL,
-	UNIQUE (idnr, program)
-);
 
 CREATE TABLE Department (
 	name TEXT PRIMARY KEY NOT NULL,
@@ -17,6 +10,15 @@ CREATE TABLE Program (
 	abbr TEXT NOT NULL
 	--department TEXT NOT NULL,
 	--FOREIGN KEY (department) REFERENCES Department(name)
+);
+
+CREATE TABLE Students (
+    idnr CHAR(10) NOT NULL PRIMARY KEY CHECK (idnr SIMILAR TO '[0-9]{10}'),
+	name TEXT NOT NULL,
+    login TEXT NOT NULL UNIQUE,
+	program CHAR(5) NOT NULL,
+	FOREIGN KEY (program) REFERENCES Program(name),
+	UNIQUE (idnr, program)
 );
 
 CREATE TABLE progToDepartment(
@@ -107,8 +109,8 @@ CREATE TABLE RecommendedBranch(
 CREATE TABLE Registered(
 	student CHAR(10) NOT NULL,
 	course CHAR(6) NOT NULL,
-	FOREIGN KEY (student) REFERENCES Students,
-	FOREIGN KEY (course) REFERENCES Courses,
+	FOREIGN KEY (student) REFERENCES Students ON DELETE CASCADE,
+	FOREIGN KEY (course) REFERENCES Courses ON DELETE CASCADE,
 	PRIMARY KEY (student, course)
 );
 
@@ -126,10 +128,10 @@ CREATE TABLE WaitingList(
 	student CHAR(10),
 	course CHAR(6) NOT NULL,
 	position SERIAL NOT NULL,
-	FOREIGN KEY (student) REFERENCES Students,
-	FOREIGN KEY (course) REFERENCES LimitedCourses,
+	FOREIGN KEY (student) REFERENCES Students ON DELETE CASCADE,
+	FOREIGN KEY (course) REFERENCES LimitedCourses ON DELETE CASCADE,
 	PRIMARY KEY (student,course),
-	UNIQUE (student, course)
+	UNIQUE (position, course)
 	);
 	
 	
