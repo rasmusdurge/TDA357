@@ -87,8 +87,6 @@ BEGIN
 		THEN DELETE FROM Registered WHERE Student = NEW.Student AND Course = NEW.course;
 	END IF;
 	
-	
-	
 -- Check whether course has a waitinglist; If not, just remove the student
 	IF (NOT EXISTS (SELECT * FROM Waitinglist WHERE New.course = course))
 		THEN DELETE FROM Registered WHERE Student = NEW.Student AND course = NEW.course;
@@ -98,6 +96,7 @@ BEGIN
 		
 		IF (EXISTS (SELECT * FROM Waitinglist WHERE NEW.course = course AND NEW.student = student))
 			THEN
+			
 			UPDATE Waitinglist
 				SET 
 					position = position - 1
@@ -105,7 +104,7 @@ BEGIN
 				
 			DELETE FROM Waitinglist WHERE NEW.Student = Student AND NEW.course = course;
 		
-		ELSE 
+		ELSE -- Student is registered 
 			DELETE FROM Registered WHERE Student = NEW.Student AND course = NEW.course;
 		
 			IF (EXISTS(select code from limitedcourses, registered 
