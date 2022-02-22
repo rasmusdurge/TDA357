@@ -72,53 +72,53 @@ CREATE or replace FUNCTION trigger_delete() RETURNS trigger as $$
 BEGIN
 
 --Check if student exists and course exists
-	IF (NOT EXISTS(SELECT idnr FROM Students where NEW.student = idnr) OR 
-	   (NOT EXISTS(SELECT code FROM courses where NEW.course = code)))
+	IF (NOT EXISTS(SELECT idnr FROM Students where OLD.student = idnr) OR 
+	   (NOT EXISTS(SELECT code FROM courses where OLD.course = code)))
 		THEN RAISE EXCEPTION 'Student is not a student or course is not a course';
 	END IF;
 	
 --Check if student is not registered nor in waitinglist
-    IF (NOT EXISTS (SELECT student, course FROM Registrations WHERE student = NEW.student AND course = NEW.course))
+    IF (NOT EXISTS (SELECT student, course FROM Registrations WHERE student = OLD.student AND course = OLD.course))
         THEN RAISE EXCEPTION 'Student is not registered or in waitinglist';
     END IF;
 	
 -- Check whether course is limited; If not, then just remove the student
-	IF (NOT EXISTS (SELECT * FROM LimitedCourses WHERE NEW.course = code))
-		THEN DELETE FROM Registered WHERE Student = NEW.Student AND Course = NEW.course;
+	IF (NOT EXISTS (SELECT * FROM LimitedCourses WHERE OLD.course = code))
+		THEN DELETE FROM Registered WHERE Student = OLD.Student AND Course = OLD.course;
 	END IF;
 	
 -- Check whether course has a waitinglist; If not, just remove the student
-	IF (NOT EXISTS (SELECT * FROM Waitinglist WHERE New.course = course))
-		THEN DELETE FROM Registered WHERE Student = NEW.Student AND course = NEW.course;
+	IF (NOT EXISTS (SELECT * FROM Waitinglist WHERE OLD.course = course))
+		THEN DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
 		
 	ELSE --Course has a waitinglist
 		-- Is the student in the waitinglist or is it registered: 1. waitinglist, 2. registered.
 		
-		IF (EXISTS (SELECT * FROM Waitinglist WHERE NEW.course = course AND NEW.student = student))
+		IF (EXISTS (SELECT * FROM Waitinglist WHERE OLD.course = course AND OLD.student = student))
 			THEN
 			
 			UPDATE Waitinglist
 				SET 
 					position = position - 1
-				WHERE course = NEW.course AND position > (SELECT position FROM Waitinglist WHERE NEW.student = student AND NEW.course = course);
+				WHERE course = OLD.course AND position > (SELECT position FROM Waitinglist WHERE OLD.student = student AND OLD.course = course);
 				
-			DELETE FROM Waitinglist WHERE NEW.Student = Student AND NEW.course = course;
+			DELETE FROM Waitinglist WHERE OLD.Student = Student AND OLD.course = course;
 		
 		ELSE -- Student is registered 
-			DELETE FROM Registered WHERE Student = NEW.Student AND course = NEW.course;
+			DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
 		
 			IF (EXISTS(select code from limitedcourses, registered 
-					where code = NEW.course group by code having count(*) <= limitedcourses.capacity))
+					where code = OLD.course group by code having count(*) <= limitedcourses.capacity))
 				THEN
 				INSERT INTO Registered (student, course) SELECT (student, course) FROM Waitinglist 
-					WHERE NEW.course = Waitinglist.course AND NEW.student = waitinglist.student AND position = 1; 
+					WHERE OLD.course = Waitinglist.course AND OLD.student = waitinglist.student AND position = 1; 
 			
-				DELETE FROM Waitinglist WHERE Student = NEW.Student AND course = NEW.course AND position = 1;
+				DELETE FROM Waitinglist WHERE Student = OLD.Student AND course = OLD.course AND position = 1;
 
 				UPDATE Waitinglist
 					SET 
 						position = position - 1
-					WHERE course = NEW.course;
+					WHERE course = OLD.course;
 
 			END IF;
 	
