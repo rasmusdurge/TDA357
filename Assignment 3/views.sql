@@ -184,4 +184,9 @@ CREATE OR REPLACE VIEW PathToGraduation AS (
 		AND passedseminar > 0 AND recommendedCredits >= 10 AS qualified
 	FROM PathToGraduationHelper
 );
+
+create or replace view CourseQueuePositions as(
+    select course, student, position as place from waitinglist
+);
+
  

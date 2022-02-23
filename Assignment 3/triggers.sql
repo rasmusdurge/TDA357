@@ -1,6 +1,3 @@
-create or replace view CourseQueuePositions as(
-    select course, student, position as place from waitinglist
-);
 
 CREATE or replace FUNCTION trigger_insert() RETURNS trigger as $$
 BEGIN
