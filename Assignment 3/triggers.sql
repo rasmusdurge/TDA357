@@ -35,22 +35,17 @@ BEGIN
 -- Check whether course is limited
 	IF (EXISTS (SELECT * FROM LimitedCourses WHERE NEW.course = code))
 		THEN
--- Check for positive capacity. If not, then add to waitinglist
-		IF (EXISTS (SELECT * FROM LimitedCourses WHERE NEW.course = code AND capacity <= 0))
-			THEN
-				INSERT INTO Waitinglist VALUES (NEW.student, NEW.course, 
-				COALESCE((SELECT COUNT(*)+1 FROM Waitinglist WHERE NEW.course = course GROUP BY course) , 1));
-			RETURN NEW;
-		END IF;
-		
+
 		
 -- Check if course has room for an additional student
-		IF (NOT EXISTS (SELECT * FROM Registered WHERE course = NEW.course)
-			OR (EXISTS(select code from limitedcourses, registered 
-			where code = NEW.course group by code having count(*) < limitedcourses.capacity)))
-			
--- Add student as registered in the limited course
-			THEN INSERT INTO Registered VALUES (NEW.student, NEW.course);
+
+	--split
+		IF (NOT EXISTS (SELECT * FROM Registered WHERE course = NEW.course))
+					THEN INSERT INTO Registered VALUES (NEW.student, NEW.course);
+		ELSIF(EXISTS(select code from limitedcourses, registered 
+			where code = NEW.course group by code having count(*) < limitedcourses.capacity))
+					THEN INSERT INTO Registered VALUES (NEW.student, NEW.course);
+		
 		ELSE
 -- Add student to the waitinglist of the limited course
 			
@@ -79,7 +74,10 @@ CREATE TRIGGER trig_insert INSTEAD OF INSERT ON Registrations
 ----
 
 CREATE or replace FUNCTION trigger_delete() RETURNS trigger as $$
-BEGIN
+DECLARE queuePos INTEGER;
+		tempStudent  CHAR(10);
+		tempCourse CHAR(6);
+BEGIN 
 
 --Check if student exists and course exists
 	IF (NOT EXISTS(SELECT idnr FROM Students where OLD.student = idnr) OR 
@@ -106,17 +104,42 @@ BEGIN
 		
 		IF (EXISTS (SELECT * FROM Waitinglist WHERE OLD.course = course AND OLD.student = student))
 			THEN
-			
+			queuePos = (SELECT position FROM Waitinglist WHERE OLD.student = student AND OLD.course = course);
+			DELETE FROM Waitinglist WHERE OLD.Student = Student AND OLD.course = course;
+		
 			UPDATE Waitinglist
 				SET 
 					position = position - 1
-				WHERE course = OLD.course AND position > (SELECT position FROM Waitinglist WHERE OLD.student = student AND OLD.course = course);
+				WHERE course = OLD.course AND position > (queuePos);
 				
-			DELETE FROM Waitinglist WHERE OLD.Student = Student AND OLD.course = course;
 		
-		ELSE -- Student is registered 
-			DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
-		
+		ELSE -- Student is registered
+			IF (EXISTS(select code from limitedcourses, registered 
+					where code = OLD.course group by code having count(*) <= limitedcourses.capacity))
+			
+				THEN
+				tempStudent = OLD.student;
+				tempCourse = OLD.course;
+				DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
+
+				INSERT INTO Registered (student, course) SELECT (student, course) FROM Waitinglist 
+						WHERE tempCourse = Waitinglist.course AND tempStudent = waitinglist.student AND position = 1; 
+				
+				
+				DELETE FROM Waitinglist WHERE tempStudent = Student AND tempCourse = course;
+
+				UPDATE Waitinglist
+						SET 
+							position = position - 1
+						WHERE course = tempCourse;
+
+			ELSE 
+			
+				DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
+
+			END IF;
+			
+			/*
 			IF (EXISTS(select code from limitedcourses, registered 
 					where code = OLD.course group by code having count(*) <= limitedcourses.capacity))
 				THEN
@@ -131,7 +154,7 @@ BEGIN
 					WHERE course = OLD.course;
 
 			END IF;
-	
+			*/
 		END IF;
 	END IF;
 	RETURN NEW;
@@ -140,7 +163,7 @@ $$ LANGUAGE plpgsql;
 
 
 
-CREATE TRIGGER trig_delete INSTEAD OF DELETE ON Registrations
+CREATE TRIGGER trig_delete INSTEAD OF DELETE OR INSERT ON Registrations
     FOR  EACH  ROW
     EXECUTE PROCEDURE trigger_delete();
 	
