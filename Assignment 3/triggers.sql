@@ -134,3 +134,4 @@ CREATE TRIGGER trig_delete INSTEAD OF DELETE ON Registrations
     FOR  EACH  ROW
     EXECUTE PROCEDURE trigger_delete();
 	
+--test
