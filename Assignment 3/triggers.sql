@@ -79,6 +79,7 @@ DECLARE queuePos INTEGER;
 		tempCourse CHAR(6);
 BEGIN 
 
+
 --Check if student exists and course exists
 	IF (NOT EXISTS(SELECT idnr FROM Students where OLD.student = idnr) OR 
 	   (NOT EXISTS(SELECT code FROM courses where OLD.course = code)))
@@ -100,8 +101,8 @@ BEGIN
 		THEN DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
 		
 	ELSE --Course has a waitinglist
-		-- Is the student in the waitinglist or is it registered: 1. waitinglist, 2. registered.
-		
+	
+		-- Is the student in the waitinglist?
 		IF (EXISTS (SELECT * FROM Waitinglist WHERE OLD.course = course AND OLD.student = student))
 			THEN
 			queuePos = (SELECT position FROM Waitinglist WHERE OLD.student = student AND OLD.course = course);
@@ -113,57 +114,41 @@ BEGIN
 				WHERE course = OLD.course AND position > (queuePos);
 				
 		
-		ELSE -- Student is registered
-			IF (EXISTS(select code from limitedcourses, registered 
-					where code = OLD.course group by code having count(*) <= limitedcourses.capacity))
-			
+		ELSE -- Student is in registered and there is a waitinglist
+		
+				-- Are there too many registered students? Then just remove student
+			IF (NOT EXISTS(select code from limitedcourses, registered where code = course group by code having count(student) > limitedcourses.capacity))
 				THEN
-				tempStudent = OLD.student;
-				tempCourse = OLD.course;
+				
 				DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
-
-				INSERT INTO Registered (student, course) SELECT (student, course) FROM Waitinglist 
-						WHERE tempCourse = Waitinglist.course AND tempStudent = waitinglist.student AND position = 1; 
+				
+			ELSE
+			-- Student is registered, and there is a waitinglist. We need to take the first student in the waitinglist and place in registered
 				
 				
-				DELETE FROM Waitinglist WHERE tempStudent = Student AND tempCourse = course;
+				tempStudent = (SELECT student from Waitinglist WHERE course = OLD.course AND position = 1);
+				tempCourse = (SELECT course from Waitinglist WHERE course = OLD.course AND position = 1);
+				
+				DELETE FROM Waitinglist WHERE tempCourse = course AND position = 1;
+				
+				DELETE FROM registered WHERE course = OLD.course AND student = OLD.student;
+				
+				INSERT INTO registered VALUES (tempStudent, tempCourse);				
 
 				UPDATE Waitinglist
 						SET 
 							position = position - 1
 						WHERE course = tempCourse;
-
-			ELSE 
-			
-				DELETE FROM Registered WHERE Student = OLD.Student AND course = OLD.course;
-
 			END IF;
 			
-			/*
-			IF (EXISTS(select code from limitedcourses, registered 
-					where code = OLD.course group by code having count(*) <= limitedcourses.capacity))
-				THEN
-				INSERT INTO Registered (student, course) SELECT (student, course) FROM Waitinglist 
-					WHERE OLD.course = Waitinglist.course AND OLD.student = waitinglist.student AND position = 1; 
-			
-				DELETE FROM Waitinglist WHERE Student = OLD.Student AND course = OLD.course AND position = 1;
-
-				UPDATE Waitinglist
-					SET 
-						position = position - 1
-					WHERE course = OLD.course;
-
-			END IF;
-			*/
+		
 		END IF;
 	END IF;
 	RETURN NEW;
 END
 $$ LANGUAGE plpgsql;
 
-
-
-CREATE TRIGGER trig_delete INSTEAD OF DELETE OR INSERT ON Registrations
+CREATE TRIGGER trig_delete INSTEAD OF DELETE ON Registrations
     FOR  EACH  ROW
     EXECUTE PROCEDURE trigger_delete();
 	

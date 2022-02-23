@@ -79,25 +79,21 @@ DELETE FROM Registrations WHERE student = 'XXXXXXXXXX' AND course = 'CCCXXX';
 
 -- Test 5. unregistered from an unlimited course;
 -- EXPECTED OUTCOME: Pass, WORKS
-	DELETE FROM Registrations WHERE Student = '6666666666' AND course = 'CCC111';
-
-
-
+    DELETE FROM Registrations WHERE Student = '6666666666' AND course = 'CCC111';
 
 --Test 4. removed from a waiting list (with additional students in it)
+-- AND Test 8. unregistered from a limited course with a waiting list, when the student is in the middle of the waiting list;
 -- EXPECTED OUTCOME: Pass, WORKS
 	DELETE FROM Registrations WHERE Student = '1111111111' AND course = 'CCC333';
 
 
---6. unregistered from a limited course without a waiting list;
+--Test 6. unregistered from a limited course without a waiting list;
+--AND Test 9. unregistered from an overfull course with a waiting list.
 	--EXPTECTED OUTCOME: Pass, WORKS
 	DELETE FROM Registrations WHERE Student = '3333333333' AND course = 'CCC222';
 	DELETE FROM Registrations WHERE Student = '1111111111' AND course = 'CCC222';
 
 
 --7. unregistered from a limited course with a waiting list, when the student is registered;
-
-
---8. unregistered from a limited course with a waiting list, when the student is in the middle of the waiting list;
-
---9. unregistered from an overfull course with a waiting list.
+--EXPTECTED OUTCOME: Pass
+	DELETE FROM Registrations WHERE Student = '5555555555' AND course = 'CCC333';
