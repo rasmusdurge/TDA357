@@ -35,10 +35,20 @@ BEGIN
 -- Check whether course is limited
 	IF (EXISTS (SELECT * FROM LimitedCourses WHERE NEW.course = code))
 		THEN
+-- Check for positive capacity. If not, then add to waitinglist
+		IF (EXISTS (SELECT * FROM LimitedCourses WHERE NEW.course = code AND capacity <= 0))
+			THEN
+				INSERT INTO Waitinglist VALUES (NEW.student, NEW.course, 
+				COALESCE((SELECT COUNT(*)+1 FROM Waitinglist WHERE NEW.course = course GROUP BY course) , 1));
+			RETURN NEW;
+		END IF;
 		
--- Check whether limited course has room for an additional student
-		IF (EXISTS(select code from limitedcourses, registered 
-			where code = NEW.course group by code having count(*) < limitedcourses.capacity))
+		
+-- Check if course has room for an additional student
+		IF (NOT EXISTS (SELECT * FROM Registered WHERE course = NEW.course)
+			OR (EXISTS(select code from limitedcourses, registered 
+			where code = NEW.course group by code having count(*) < limitedcourses.capacity)))
+			
 -- Add student as registered in the limited course
 			THEN INSERT INTO Registered VALUES (NEW.student, NEW.course);
 		ELSE

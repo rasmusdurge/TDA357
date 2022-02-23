@@ -28,6 +28,7 @@ INSERT INTO Courses VALUES ('CCC555','C5',50,'Dep1');
 INSERT INTO LimitedCourses VALUES ('CCC222',1);
 INSERT INTO LimitedCourses VALUES ('CCC333',2);
 
+
 INSERT INTO Classifications VALUES ('math');
 INSERT INTO Classifications VALUES ('research');
 INSERT INTO Classifications VALUES ('seminar');
@@ -74,3 +75,5 @@ INSERT INTO WaitingList VALUES('3333333333','CCC222',1);
 INSERT INTO WaitingList VALUES('3333333333','CCC333',1);
 INSERT INTO WaitingList VALUES('2222222222','CCC333',2);
 
+INSERT INTO Courses VALUES ('CCC600','C6',500,'Dep1'); --Created for testing
+INSERT INTO LimitedCourses VALUES ('CCC600',0); -- Created for testing
