@@ -39,14 +39,14 @@ public class PortalConnection {
     public String register(String student, String courseCode){
 
         try(PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO REGISTERED VALUES(?,?)");){
+                "INSERT INTO REGISTRATIONS VALUES(?,?)");){
             ps.setString(1,student);
             ps.setString(2, courseCode);
-            ResultSet rs = ps.executeQuery();
+            ps.executeUpdate();
             return "{\"success\":true\"}";
 
         } catch (SQLException e) {
-            return "{\"success\":false, \"error\":\""+getError(e)+"\"}";
+            return "{\"success\":false, \"error\":\""+ getError(e)+"\"}";
         }
         // placeholder, remove along with this comment.
       //return "{\"success\":false, \"error\":\"Registration is not implemented yet :(\"}";
@@ -58,9 +58,33 @@ public class PortalConnection {
     }
 
     // Unregister a student from a course, returns a tiny JSON document (as a String)
-    public String unregister(String student, String courseCode){
-      return "{\"success\":false, \"error\":\"Unregistration is not implemented yet :(\"}";
+    public String unregister(String student, String courseCode) {
+        //DELETE FROM Registrations WHERE Student = '1111111111' AND course = 'CCC333';
+
+        try (PreparedStatement ps2 = conn.prepareStatement(
+                "DELETE FROM REGISTRATIONS WHERE student = ? AND course = ?");) {
+            ps2.setString(1, student);
+            ps2.setString(2, courseCode);
+            int n = 0;
+            n = ps2.executeUpdate();
+            if (n >= 1) {
+                System.out.println("Deleted object" + student + ',' + courseCode);
+                return "{\"success\":true\"}";
+            }
+            else {
+                System.out.println("Student is not in registrations");
+                return "{\"success\":false\"}";
+            }
+        } catch (SQLException e) {
+            return "{\"success\":false, \"error\":\""+ getError(e)+"\"}";
+        }
+
+
+        //return "{\"success\":false, \"error\":\"Unregistration is not implemented yet :(\"}";
+
     }
+
+
 
     // Return a JSON document containing lots of information about a student, it should validate against the schema found in information_schema.json
     public String getInfo(String student) throws SQLException{
